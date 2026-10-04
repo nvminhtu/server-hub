@@ -128,10 +128,10 @@ xattr -dr com.apple.quarantine "/Applications/Server Hub.app"
 ![First launch: the Localhost list works right away; add your projects folder to start and stop projects](docs/start.jpg)
 
 1. **Open Server Hub.** The **Localhost** list works right away; there's nothing to set up.
-2. **Add your projects folder.** Click **+ Add projects folder…** in the sidebar and pick the folder that holds your
+2. **Add your projects folder.** Open the sidebar (**☰** or `⌘B`), click **+ Add projects folder…** and pick the folder that holds your
    projects, e.g. `~/code`. If you keep projects in several places, use **+ Add folder** at the bottom of the
    sidebar to add more.
-3. **Start something.** Go to **All projects**, select a project and press **▶** (or `Space`). Its log appears at
+3. **Start something.** Go to the **Projects** tab, tick **Show all**, select a project and press **▶** (or `Space`). Its log appears at
    the bottom. When it's ready, press **↗** (or `↵`) to open it in the browser.
 4. **Keep an eye on it.** Glance at the menu bar: if a `!` shows up, one of your servers stopped answering properly.
 
