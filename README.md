@@ -61,7 +61,8 @@ refreshed every few seconds:
 
 **Menu bar** — the number of open ports (e.g. `5 · 1!` when one of them is unhealthy); click one to open it.
 
-**Projects** — choose your projects folder once. Server Hub finds everything that can run inside it
+**Projects** — add one or more projects folders (**+ Add folder** at the bottom of the sidebar; × removes one, nothing is
+deleted). Server Hub finds everything that can run inside them
 (`package.json` with `dev`/`start`, `.claude/launch.json`, `run.sh`) so you can **▶ start** and **■ stop** each one,
 read its live log, and see when two projects want the same port. Add anything else by hand with **+ Add**.
 
