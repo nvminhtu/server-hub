@@ -118,8 +118,8 @@ Using an older version (0.2.0 or earlier) and macOS blocks it? Go to **System Se
 
 Every download since **0.2.1** passes two Apple checks:
 
-- **Signed with a Developer ID.** The app carries the signature *Developer ID Application: Tu Nguyen (ASF7S2CGR3)*,
-  a certificate Apple issues to registered developers. If anyone changes even one byte of the app after it was signed,
+- **Signed with a Developer ID.** The app carries a Developer ID signature, a certificate Apple issues only to
+  registered developers. If anyone changes even one byte of the app after it was signed,
   the signature breaks and macOS refuses to open it.
 - **Notarized by Apple.** Before release, this exact build was uploaded to Apple's notary service, which scans it for
   known malware and checks that it is built safely (hardened runtime). Apple then issues a "ticket" for it. The ticket is
@@ -136,7 +136,7 @@ the source code is open — see [Build from source](#build-from-source).
 spctl -a -vv "/Applications/Server Hub.app"
 ```
 
-You should see `accepted`, `source=Notarized Developer ID` and `origin=Developer ID Application: Tu Nguyen (ASF7S2CGR3)`.
+You should see `accepted` and `source=Notarized Developer ID`.
 
 ## Getting started
 
