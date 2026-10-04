@@ -3,7 +3,7 @@
 <h1 align="center">Server Hub</h1>
 
 <p align="center"><b>See every localhost server on your Mac — and whether it actually works.</b><br>
-Free for macOS · Apple silicon & Intel · no account · nothing leaves your computer</p>
+Free and open source (MIT) for macOS · Apple silicon & Intel · no account · nothing leaves your network</p>
 
 <p align="center">
   <a href="https://github.com/nvminhtu/server-hub/releases/latest/download/Server-Hub-mac.dmg"><b>⬇ Download for Mac</b></a> ·
@@ -30,13 +30,16 @@ holds port 5173.
 - [Download](#download)
 - [Install](#install)
 - [Getting started](#getting-started)
+- [Share on your local network](#share-on-your-local-network)
 - [How it works](#how-it-works)
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Privacy](#privacy)
 - [FAQ](#faq)
 - [Troubleshooting](#troubleshooting)
 - [Uninstall](#uninstall)
+- [Build from source](#build-from-source)
 - [Feedback](#feedback)
+- [License](#license)
 
 ## Features
 
@@ -58,7 +61,7 @@ Each row also shows:
 - **uptime** and **memory**
 - **who started it**: Terminal, iTerm, Warp, Ghostty, VS Code, Cursor, Xcode, Claude Code, Codex, or Server Hub itself
 
-Row buttons: **↗** open in the browser · **■** stop (click twice to confirm) · **⌂** open the folder in Finder · **⧉** copy the URL.
+Row buttons: **↗** open in the browser · **⇄** [share on your local network](#share-on-your-local-network) · **■** stop (click twice to confirm) · **⌂** open the folder in Finder · **⧉** copy the URL.
 
 Server Hub never stops macOS system processes.
 
@@ -66,6 +69,9 @@ Server Hub never stops macOS system processes.
 
 ![Projects view: projects grouped by folder, start/stop buttons and a live log](docs/projects.jpg)
 
+- **Only what runs, by default.** The list and the sidebar show running projects only, so a folder with 30 projects
+  doesn't bury the 3 you are using. Tick **Show all** in the top bar to see every project, stopped ones included
+  (Server Hub remembers the choice).
 - **Add one or more project folders** (`~/code`, `~/work`, `~/Developer`…). Server Hub finds everything that can
   run inside them:
   - `package.json` with a `dev` or `start` script that starts a server (vite, next, astro, node, webpack…)
@@ -132,6 +138,18 @@ xattr -dr com.apple.quarantine "/Applications/Server Hub.app"
 To stop scanning a folder, hover over it under **Folders** and click **×** twice. Your files are not touched;
 the folder's projects just leave the list.
 
+## Share on your local network
+
+Want to open your dev site on your phone, or show it to a teammate on the same Wi-Fi? Press **⇄** on a running row.
+
+- If the server already listens on every address (`*:8080`), Server Hub copies its LAN link, e.g. `http://192.168.1.20:8080`.
+- If it listens on `127.0.0.1` only (vite, next dev and most dev servers do by default), Server Hub opens a small relay on
+  port + 10000 and copies that link: `5173 → http://192.168.1.20:15173`.
+- A blue **⇄** means the row is reachable from the network; the link is shown in the row. Click it twice to stop sharing.
+- Relays close by themselves when the server stops or when you quit Server Hub. Nothing is exposed to the internet:
+  only devices on your local network can connect.
+- The first time, macOS may ask whether Server Hub may accept incoming connections. Click **Allow**.
+
 ## How it works
 
 - **Ports:** `lsof` lists the TCP ports in LISTEN state; `ps` gives the process, its folder, uptime and memory.
@@ -159,6 +177,7 @@ Server Hub runs only on your Mac.
 
 - It reads the list of listening ports and processes (`lsof`, `ps`) and the project files in the folders **you** add.
 - Health checks go **only to localhost**.
+- Sharing (⇄) is off until you press it, and only reaches devices on your local network.
 - It saves its settings (your folder list and servers you added by hand) in
   `~/Library/Application Support/server-hub/`.
 - No account, no analytics, no tracking, no network calls to anyone else.
@@ -212,7 +231,33 @@ just like pressing Ctrl+C in a terminal. Server Hub refuses to stop macOS system
 2. Drag **Server Hub** from Applications to the Trash.
 3. Optional: also remove its settings in `~/Library/Application Support/server-hub/`.
 
+## Build from source
+
+You need macOS, [Node.js](https://nodejs.org) 20+ and [Rust](https://rustup.rs).
+
+```bash
+git clone https://github.com/nvminhtu/server-hub && cd server-hub
+npm ci
+npm test                 # core tests (Rust)
+npm run app              # run the app in dev mode
+npx tauri build --bundles app,dmg   # → src-tauri/target/release/bundle/
+```
+
+| Folder | What's inside |
+|---|---|
+| `core/` | Rust: find runnable projects (`scan.rs`), ports and processes (`procs.rs`), health checks (`health.rs`), LAN relay (`share.rs`), start / stop / logs (`api.rs`) |
+| `src/` | the UI: plain TypeScript + Vite |
+| `src-tauri/` | the macOS shell and the menu bar icon (Tauri 2) |
+
+Try the UI in a browser without building the app: `npm run bridge` (API on :4410) and `npm run dev` (http://localhost:1450).
+
+Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a `v*` tag is pushed.
+
 ## Feedback
 
 Found a bug or want a feature? [Open an issue](https://github.com/nvminhtu/server-hub/issues). Include your macOS version
 and, if you can, a screenshot.
+
+## License
+
+[MIT](LICENSE) © nvminhtu. Free to use, change and share.

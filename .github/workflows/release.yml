@@ -1,0 +1,66 @@
+# Push a tag `vX.Y.Z` (or run it by hand) → build the universal macOS .dmg and publish it as a GitHub release.
+# Signing + notarization turn on by themselves when these repository secrets exist (Settings → Secrets → Actions):
+#   APPLE_CERTIFICATE (base64 of the Developer ID Application .p12), APPLE_CERTIFICATE_PASSWORD,
+#   APPLE_SIGNING_IDENTITY ("Developer ID Application: Name (TEAMID)"), APPLE_ID, APPLE_PASSWORD (app-specific), APPLE_TEAM_ID
+# Without them the build is unsigned (users open it via Privacy & Security → Open Anyway).
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            core
+            src-tauri
+      - run: npm ci
+      - name: Test
+        run: npm run check
+      - name: Build universal .dmg
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # empty secrets would make tauri try (and fail) to sign: drop them when not set
+          for v in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -z "${!v}" ] && unset $v
+          done
+          npx tauri build --target universal-apple-darwin --bundles dmg
+      - name: Package
+        run: |
+          cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg Server-Hub-mac.dmg
+          shasum -a 256 Server-Hub-mac.dmg > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          case "$TAG" in v*) ;; *) TAG="v$(node -p "require('./package.json').version")";; esac
+          NOTES=$(awk -v t="## ${TAG#v}" '$0 ~ "^## " {p = ($0 == t)} p && !/^## /' CHANGELOG.md)
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" Server-Hub-mac.dmg SHA256SUMS.txt --clobber
+          else
+            gh release create "$TAG" Server-Hub-mac.dmg SHA256SUMS.txt --title "Server Hub ${TAG#v}" --notes "${NOTES:-Server Hub $TAG}"
+          fi

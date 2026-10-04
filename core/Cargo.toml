@@ -1,0 +1,21 @@
+[package]
+name = "hub-core"
+version = "0.1.0"
+edition = "2021"
+description = "Server Hub: find every way to run a project, see what listens on which port, start and stop it"
+
+[lib]
+name = "hub_core"
+
+[[bin]]
+name = "server-hub"
+path = "src/bin/server-hub.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiny_http = "0.12"
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"

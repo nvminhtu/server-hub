@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Server Hub</title>
+</head>
+<body>
+<div class="app">
+  <header class="top" data-tauri-drag-region>
+    <b class="brand" data-tauri-drag-region><span class="logo" data-tauri-drag-region>▶</span>Server Hub</b>
+    <div class="search"><span class="k">⌘K</span><input id="q" placeholder="Search ports, projects, commands" spellcheck="false"></div>
+    <span class="pill" id="pill">0 on localhost</span>
+    <span class="pill bad" id="bad" style="display:none"></span>
+    <label class="chk" id="allWrap" title="Also list projects that are not running (main list + sidebar)"><input type="checkbox" id="showAll"> Show all</label>
+    <span class="grow" data-tauri-drag-region></span>
+    <button id="stopAll" class="danger" title="Stop every running server (asks first)">■ Stop all</button>
+    <button id="rescan" title="Scan again">↻ Refresh</button>
+    <button id="addBtn" title="Add something that has no launch.json / package.json">+ Add</button>
+  </header>
+  <aside class="side" id="side"></aside>
+  <main class="main"><div id="list"></div></main>
+  <section class="log" id="logPane">
+    <div class="lh"><span id="logTitle">Select a row to see its log</span><span class="grow"></span><span class="faint" id="logHint"></span></div>
+    <pre id="log"></pre>
+  </section>
+</div>
+
+<div class="ov" id="addOv"><form class="mdl" id="addForm">
+  <h3>Add a server by hand</h3>
+  <p class="faint">For things with no <span class="mono">.claude/launch.json</span> or <span class="mono">package.json</span>. Saved in <span class="mono">~/Library/Application Support/server-hub/custom.json</span>.</p>
+  <label>Name</label><input id="aName" required placeholder="api-mock">
+  <label>Folder</label><input id="aCwd" required placeholder="~/code/my-api">
+  <label>Command</label><input id="aCmd" required placeholder="npm start" class="mono">
+  <label>Port <span class="faint">(optional)</span></label><input id="aPort" placeholder="8080" inputmode="numeric">
+  <div class="err" id="aErr"></div>
+  <div class="mf"><button type="button" id="aNo">Cancel</button><button class="primary" type="submit">Add</button></div>
+</form></div>
+<div class="ov" id="saOv"><div class="mdl wide">
+  <h3 id="saT">Stop all servers?</h3>
+  <p class="faint" id="saP">These will be stopped. Unsaved work in a dev server's terminal is not affected; the servers just shut down.</p>
+  <div class="sa-list" id="saList"></div>
+  <label class="sa-out" id="saOutWrap"><input type="checkbox" id="saOut"> <span id="saOutT"></span></label>
+  <div class="mf"><button type="button" id="saNo">Cancel</button><button class="solid-danger" id="saYes">Stop</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
