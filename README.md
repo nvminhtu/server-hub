@@ -107,21 +107,11 @@ shasum -a 256 ~/Downloads/Server-Hub-mac.dmg
 ## Install
 
 1. Open **Server-Hub-mac.dmg** and drag **Server Hub** onto the **Applications** folder.
-2. Open **Server Hub** from Applications.
-3. The first time, macOS says *"Server Hub" Not Opened – Apple could not verify…*. Click **Done**.
-   This happens because this version is not notarized by Apple yet. A notarized build is on the way.
-4. Open **System Settings → Privacy & Security**, scroll down to *"Server Hub" was blocked…* and click
-   **Open Anyway**. Enter your Mac password, then click **Open**.
-5. That's it. From now on Server Hub opens normally.
+2. Open **Server Hub** from Applications. That's it.
 
-<details><summary>Still blocked? (advanced)</summary>
-
-In Terminal, remove the download flag, then open the app again:
-
-```bash
-xattr -dr com.apple.quarantine "/Applications/Server Hub.app"
-```
-</details>
+Server Hub is signed with a Developer ID and notarized by Apple (since 0.2.1), so it opens without a warning.
+Using an older version (0.2.0 or earlier) and macOS blocks it? Go to **System Settings → Privacy & Security** and click
+**Open Anyway**, or just download the newest version.
 
 ## Getting started
 
@@ -219,7 +209,7 @@ just like pressing Ctrl+C in a terminal. Server Hub refuses to stop macOS system
 
 | Problem | Fix |
 |---|---|
-| macOS says the app can't be opened | Follow steps 3–4 of [Install](#install) (Privacy & Security → Open Anyway). |
+| macOS says the app can't be opened | Download the newest version (signed + notarized). Older builds: System Settings → Privacy & Security → **Open Anyway**. |
 | ▶ Start fails with "command not found" | Server Hub uses your login shell's `PATH`. Make sure the tool (npm, pnpm, python…) works in a **new** Terminal window, then quit and reopen Server Hub. |
 | "port 5173 is already in use by pid …" | Something else already holds that port. Find it in **Localhost**, stop it, then press ▶ again. |
 | The list is empty | Press **↻ Refresh**. If it stays empty, no dev server is running yet. |
