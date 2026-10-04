@@ -3,7 +3,7 @@
 <h1 align="center">Server Hub</h1>
 
 <p align="center"><b>See every localhost server on your Mac — and whether it actually works.</b><br>
-Free and open source (MIT) for macOS · Apple silicon & Intel · no account · nothing leaves your network</p>
+Free and open source (MIT) for macOS · Apple silicon & Intel · signed & notarized by Apple · no account · nothing leaves your network</p>
 
 <p align="center">
   <a href="https://github.com/nvminhtu/server-hub/releases/latest/download/Server-Hub-mac.dmg"><b>⬇ Download for Mac</b></a> ·
@@ -29,6 +29,7 @@ holds port 5173.
 - [Features](#features)
 - [Download](#download)
 - [Install](#install)
+  - [Signed and notarized by Apple](#signed-and-notarized-by-apple)
 - [Getting started](#getting-started)
 - [Share on your local network](#share-on-your-local-network)
 - [How it works](#how-it-works)
@@ -112,6 +113,30 @@ shasum -a 256 ~/Downloads/Server-Hub-mac.dmg
 Server Hub is signed with a Developer ID and notarized by Apple (since 0.2.1), so it opens without a warning.
 Using an older version (0.2.0 or earlier) and macOS blocks it? Go to **System Settings → Privacy & Security** and click
 **Open Anyway**, or just download the newest version.
+
+### Signed and notarized by Apple
+
+Every download since **0.2.1** passes two Apple checks:
+
+- **Signed with a Developer ID.** The app carries the signature *Developer ID Application: Tu Nguyen (ASF7S2CGR3)*,
+  a certificate Apple issues to registered developers. If anyone changes even one byte of the app after it was signed,
+  the signature breaks and macOS refuses to open it.
+- **Notarized by Apple.** Before release, this exact build was uploaded to Apple's notary service, which scans it for
+  known malware and checks that it is built safely (hardened runtime). Apple then issues a "ticket" for it. The ticket is
+  stapled to the `.dmg`, so the check also works offline.
+
+When you open the app, macOS **Gatekeeper** checks both and lets it open without the *"Apple could not verify…"* warning.
+
+Notarization is an automated security check, not an App Store review: Apple doesn't test what the app does. For that,
+the source code is open — see [Build from source](#build-from-source).
+
+**Check it yourself** after installing:
+
+```bash
+spctl -a -vv "/Applications/Server Hub.app"
+```
+
+You should see `accepted`, `source=Notarized Developer ID` and `origin=Developer ID Application: Tu Nguyen (ASF7S2CGR3)`.
 
 ## Getting started
 
