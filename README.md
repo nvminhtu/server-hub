@@ -89,7 +89,7 @@ Server Hub keeps running in the menu bar. Quit it from the menu bar icon.
 
 | Platform | File | Size |
 |---|---|---|
-| **macOS 11 Big Sur or later**, Apple silicon & Intel (universal) | [Server-Hub-mac.dmg](https://github.com/nvminhtu/server-hub/releases/latest/download/Server-Hub-mac.dmg) | ~4 MB |
+| **macOS 11 Big Sur or later**, Apple silicon & Intel (universal) | [Server-Hub-mac.dmg](https://github.com/nvminhtu/server-hub/releases/latest/download/Server-Hub-mac.dmg) | ~6 MB |
 
 This link always downloads the newest version. Older versions and checksums (`SHA256SUMS.txt`) are on the
 [Releases](https://github.com/nvminhtu/server-hub/releases) page. To check your download:
