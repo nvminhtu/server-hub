@@ -308,6 +308,10 @@ fn label(e: &mut Entry, root: &Path) {
         .map(|c| c.as_os_str().to_string_lossy().to_string())
         .or_else(|| root.file_name().map(|n| n.to_string_lossy().to_string()))
         .unwrap_or_else(|| "Other".into());
+    // projects sitting straight in the folder (~/code/shop-api) group under the folder itself, not one group each
+    if e.group == e.repo {
+        e.group = root.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "Other".into());
+    }
     let rr = file.parent().and_then(|d| git_root(d, root));
     e.project = project_of(e, rr.as_deref());
 }
@@ -404,7 +408,8 @@ mod tests {
         assert_eq!(es[0].port, Some(1999));
         assert_eq!(es[1].program, None);
         assert_eq!(es[2].args, vec!["play"]);
-        assert!(es.iter().all(|e| e.group == "Repo"));
+        let top = t.path().file_name().unwrap().to_string_lossy().to_string();
+        assert!(es.iter().all(|e| e.group == top), "a repo right in the root groups under the root's name");
         assert_eq!(es[0].project, "foo", "apps/ACTIVE/<slug> in --prefix");
         assert_eq!(es[2].project, "dino");
         assert_eq!(es[1].project, "Repo", "attach-only row falls back to the repo");

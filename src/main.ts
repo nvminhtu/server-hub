@@ -20,6 +20,9 @@ const collapsed = new Set<string>(JSON.parse(store.get('hub.collapsed') || '[]')
 view = store.get('hub.view') || LOCAL;
 if (view === '__outside__') view = LOCAL;
 function setView(v: string) { view = v; store.set('hub.view', v); }
+// Sidebar starts closed; the Localhost / Projects tabs in the top bar are enough to move around.
+function setSide(open: boolean) { $('app').classList.toggle('noside', !open); store.set('hub.side', open ? '1' : '0'); }
+setSide(store.get('hub.side') === '1');
 const inView = (r: Row) =>
   view === 'all' || view === `g:${r.group}` || view === `r:${r.repo}` || view === `p:${r.repo}${SEP}${r.project}`;
 const isOn = (r: Row) => r.status === 'running' || r.status === 'starting';
@@ -109,6 +112,7 @@ function renderSide() {
 // Folders that get scanned for projects: add as many as you like, × to drop one.
 function folders() {
   const list = snap.roots.filter((r) => r.exists || snap.roots.length > 1 || snap.entries.length);
+  if (!list.length) return ''; // first run: the "Add projects folder…" button above is enough
   return `<div class="roots"><div class="sh">Folders</div>${list
     .map((r) => `<div class="rt mono ${r.exists ? '' : 'gone'}" title="${esc(r.path)}${r.exists ? '' : ' (not found)'}"><span class="rp">&lrm;${esc(r.path)}&lrm;</span><button class="rx ${armed === 'root:' + r.path ? 'armed' : ''}" data-unroot="${esc(r.path)}" title="Stop scanning this folder (nothing is deleted)">${armed === 'root:' + r.path ? 'remove?' : '×'}</button></div>`)
     .join('')}<button class="addroot" data-root="add" title="Scan another folder for projects">+ Add folder</button></div>`;
@@ -154,8 +158,9 @@ function rowHtml(r: Row) {
   const port = r.ports.length ? r.ports.map((p) => `:${p}`).join(' ') : r.port ? `:${r.port}` : r.kind === 'run.sh' ? 'game' : '';
   const meta = r.status === 'running' || r.status === 'starting' ? [lanTag(r.ports[0]), ago(r.secs), r.mb != null ? `${r.mb} MB` : '', r.own ? '' : r.source ? `by ${r.source}` : ''].filter(Boolean).join(' · ') : '';
   const warn = r.note ? `<span class="chip ${r.status === 'error' ? 'red' : 'red'}" title="${esc(r.note)}">${esc(r.note)}</span>` : r.sharedPort.length && r.status !== 'running' ? `<span class="chip amber" title="Same port as ${esc(r.sharedPort.join(', '))}">shares :${r.port}</span>` : '';
+  const sick = r.status === 'running' && r.health === 'unhealthy';
   return `<div class="row ${selected === r.id ? 'sel' : ''} st-${r.status}" data-row="${r.id}">
-    <span class="dot ${r.status}" title="${r.status}"></span>
+    <span class="dot ${sick ? 'unhealthy' : r.status}" title="${sick ? 'running, but unhealthy (5xx or no answer)' : r.status}"></span>
     <span class="nm mono">${esc(r.name)}</span>
     <span class="cmd mono" title="${esc(r.cwd)}\n${esc(r.command)}">${esc(r.command)}</span>
     <span class="port mono">${esc(port)}</span>
@@ -226,6 +231,8 @@ function render() {
   $('bad').textContent = snap.unhealthy ? `${snap.unhealthy} unhealthy` : '';
   $('bad').style.display = snap.unhealthy ? '' : 'none';
   $<HTMLInputElement>('showAll').checked = showAll;
+  $('tLocal').classList.toggle('sel', view === LOCAL);
+  $('tProj').classList.toggle('sel', view !== LOCAL);
   $('rescan').title = view === LOCAL ? 'Check every port again' : 'Scan the projects folder again';
   const n = stopTargets().length;
   $<HTMLButtonElement>('stopAll').disabled = n === 0;
@@ -389,6 +396,11 @@ document.addEventListener('keydown', (ev) => {
     $<HTMLInputElement>('q').select();
     return;
   }
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'b') {
+    ev.preventDefault();
+    setSide($('app').classList.contains('noside'));
+    return;
+  }
   if (ev.key === 'Escape') {
     if ($('addOv').classList.contains('show')) return closeAdd();
     if ($('saOv').classList.contains('show')) return closeStopAll();
@@ -419,6 +431,7 @@ document.addEventListener('keydown', (ev) => {
 });
 
 $('q').addEventListener('input', () => renderList());
+$('sideBtn').addEventListener('click', () => setSide($('app').classList.contains('noside')));
 $('showAll').addEventListener('change', () => {
   showAll = $<HTMLInputElement>('showAll').checked;
   store.set('hub.showAll', showAll ? '1' : '0');

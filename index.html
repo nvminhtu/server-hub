@@ -6,9 +6,11 @@
   <title>Server Hub</title>
 </head>
 <body>
-<div class="app">
+<div class="app noside" id="app">
   <header class="top" data-tauri-drag-region>
+    <button id="sideBtn" class="icon" title="Show / hide sidebar (⌘B)">☰</button>
     <b class="brand" data-tauri-drag-region><span class="logo" data-tauri-drag-region>▶</span>Server Hub</b>
+    <div class="tabs"><button id="tLocal" data-view="__localhost__">Localhost</button><button id="tProj" data-view="all">Projects</button></div>
     <div class="search"><span class="k">⌘K</span><input id="q" placeholder="Search ports, projects, commands" spellcheck="false"></div>
     <span class="pill" id="pill">0 on localhost</span>
     <span class="pill bad" id="bad" style="display:none"></span>

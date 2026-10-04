@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- **Sidebar starts closed.** More room for the list; open it with ☰ or ⌘B. New **Localhost / Projects** tabs in the top bar.
+- **Bigger ▶ / ■ buttons**, always visible, green to start and red to stop.
+- Back from 0.1.2: projects sitting straight in a folder group under that folder (e.g. **CODE**), and a running project
+  that answers HTTP 5xx gets a red dot in the Projects list.
+- The top bar no longer wraps on narrower windows.
+
 ## 0.2.0
 
 - **Running servers only by default.** The project list and the sidebar show just what is running; tick **Show all**
