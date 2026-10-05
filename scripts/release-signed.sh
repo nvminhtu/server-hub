@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build Server Hub on your Mac, sign it with your Developer ID, notarize it with Apple and upload it to the GitHub release
-# of the version in package.json (replaces the unsigned .dmg built by CI).
+# of the version in package.json. Releases are made only this way; the GitHub Actions workflow is manual-only.
 #   ./scripts/release-signed.sh
 # Needs: a "Developer ID Application" certificate in your keychain, Xcode command line tools, Node, Rust, gh (logged in).
 # The first run asks once for your Apple ID + an app-specific password (appleid.apple.com) and keeps them in the keychain.
@@ -34,10 +34,15 @@ npm ci
 npm run check
 # tauri signs the app (hardened runtime) with this identity; notarization is done below with the keychain profile
 env -u APPLE_ID -u APPLE_PASSWORD -u APPLE_API_KEY -u APPLE_API_ISSUER -u APPLE_CERTIFICATE \
-  APPLE_SIGNING_IDENTITY="$IDENTITY" npx tauri build --target universal-apple-darwin --bundles dmg
+  APPLE_SIGNING_IDENTITY="$IDENTITY" npx tauri build --target universal-apple-darwin --bundles app
 codesign --verify --deep --strict --verbose=1 "$APP"
 
-cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg "$DMG"
+# Tauri's own dmg step drives Finder and often fails or hangs, so pack the .dmg here: the app + an Applications link.
+STAGE=$(mktemp -d)
+cp -R "$APP" "$STAGE/" && ln -s /Applications "$STAGE/Applications"
+rm -f "$DMG"
+hdiutil create -volname "Server Hub" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
+rm -rf "$STAGE"
 codesign --force --sign "$IDENTITY" --timestamp "$DMG"
 
 echo "→ Notarize (Apple usually answers in 1–10 minutes)"
@@ -53,7 +58,10 @@ export GH_TOKEN="${GH_TOKEN:-$(gh auth token -u nvminhtu 2>/dev/null || gh auth 
 if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
   gh release upload "$TAG" "$DMG" SHA256SUMS.txt --clobber -R "$REPO"
 else
-  gh release create "$TAG" "$DMG" SHA256SUMS.txt -R "$REPO" --title "Server Hub $VERSION" --notes "Server Hub $VERSION"
+  NOTES=$(mktemp)
+  awk -v h="## $VERSION" '$0==h{f=1;next} /^## /{f=0} f' CHANGELOG.md > "$NOTES"
+  printf '\nSigned with Developer ID and notarized by Apple — open the .dmg, drag Server Hub to Applications.\n' >> "$NOTES"
+  gh release create "$TAG" "$DMG" SHA256SUMS.txt -R "$REPO" --target main --title "Server Hub $VERSION" --notes-file "$NOTES"
 fi
 echo "✓ Signed + notarized $DMG is live: https://github.com/$REPO/releases/tag/$TAG"
 cat SHA256SUMS.txt
