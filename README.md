@@ -55,20 +55,24 @@ refreshes every few seconds.
 | 🔴 **unhealthy** | answers with HTTP 5xx, or the port is open but nothing answers |
 | 🔵 **not a web page** | the port is alive but speaks another protocol (Postgres, Redis, adb…) |
 
-Each row also shows:
+Each row stays short: status dot, port, project name, **↗** open in the browser and **■** stop (click twice to confirm).
+**Click a row** and a detail panel opens at the bottom with everything else:
 
+- the URL, the health result and, when shared, the [LAN link](#share-on-your-local-network)
 - the **project folder name** and the **tool** behind it: vite, next, astro, nuxt, webpack, http.server, uvicorn,
   django, rails, angular and others
 - **uptime** and **memory**
 - **who started it**: Terminal, iTerm, Warp, Ghostty, VS Code, Cursor, Xcode, Claude Code, Codex, or Server Hub itself
+- the command, folder and PID
+- buttons: **Open** · **Share on LAN** · **Show in Finder** · **Copy URL** · **Stop**
 
-Row buttons: **↗** open in the browser · **⇄** [share on your local network](#share-on-your-local-network) · **■** stop (click twice to confirm) · **⌂** open the folder in Finder · **⧉** copy the URL.
+`Esc` or **✕** closes the panel.
 
 Server Hub never stops macOS system processes.
 
 ### Projects — start and stop what you build
 
-![Projects view: projects grouped by folder, start/stop buttons and a live log](docs/projects.jpg)
+![Projects view: projects grouped by folder, start/stop buttons, and the detail panel with a live log](docs/projects.jpg)
 
 - **Only what runs, by default.** The list and the sidebar show running projects only, so a folder with 30 projects
   doesn't bury the 3 you are using. Tick **Show all** in the top bar to see every project, stopped ones included
@@ -80,7 +84,8 @@ Server Hub never stops macOS system processes.
   - `run.sh`
 - **▶ Start** runs the command in the right folder, using the same `PATH` as your terminal (Homebrew, nvm, fnm, volta…).
   **■ Stop** shuts down the whole process group, so npm, vite and esbuild all exit together.
-- **Live log** for everything you start from Server Hub: the last 2,000 lines, with errors in red and "ready" lines in green.
+- **Live log** for everything you start from Server Hub, in the detail panel next to the project's info: the last
+  2,000 lines, with errors in red and "ready" lines in green.
 - **Health in the list:** a project that is running but returns 5xx gets a red dot.
 - **Port clash warning** when two projects want the same port, with the name of whoever holds it.
 - **■ Stop all** asks first and lists every server it will stop.
@@ -146,8 +151,8 @@ You should see `accepted` and `source=Notarized Developer ID`.
 2. **Add your projects folder.** Open the sidebar (**☰** or `⌘B`), click **+ Add projects folder…** and pick the folder that holds your
    projects, e.g. `~/code`. If you keep projects in several places, use **+ Add folder** at the bottom of the
    sidebar to add more.
-3. **Start something.** Go to the **Projects** tab, tick **Show all**, select a project and press **▶** (or `Space`). Its log appears at
-   the bottom. When it's ready, press **↗** (or `↵`) to open it in the browser.
+3. **Start something.** Go to the **Projects** tab, tick **Show all**, select a project and press **▶** (or `Space`). Its details and log
+   appear in the panel at the bottom. When it's ready, press **↗** (or `↵`) to open it in the browser.
 4. **Keep an eye on it.** Glance at the menu bar: if a `!` shows up, one of your servers stopped answering properly.
 
 To stop scanning a folder, hover over it under **Folders** and click **×** twice. Your files are not touched;
@@ -155,12 +160,12 @@ the folder's projects just leave the list.
 
 ## Share on your local network
 
-Want to open your dev site on your phone, or show it to a teammate on the same Wi-Fi? Press **⇄** on a running row.
+Want to open your dev site on your phone, or show it to a teammate on the same Wi-Fi? Click a running row, then **Share on LAN** in the detail panel.
 
 - If the server already listens on every address (`*:8080`), Server Hub copies its LAN link, e.g. `http://192.168.1.20:8080`.
 - If it listens on `127.0.0.1` only (vite, next dev and most dev servers do by default), Server Hub opens a small relay on
   port + 10000 and copies that link: `5173 → http://192.168.1.20:15173`.
-- A blue **⇄** means the row is reachable from the network; the link is shown in the row. Click it twice to stop sharing.
+- The button turns blue (**Shared on LAN** / **On LAN**) and the link is shown under **LAN** in the panel. Click it twice to stop sharing.
 - Relays close by themselves when the server stops or when you quit Server Hub. Nothing is exposed to the internet:
   only devices on your local network can connect.
 - The first time, macOS may ask whether Server Hub may accept incoming connections. Click **Allow**.
@@ -183,7 +188,7 @@ Want to open your dev site on your phone, or show it to a teammate on the same W
 | `↑` `↓` | select a row |
 | `Space` | start / stop the selected row |
 | `↵` | open the selected row in the browser |
-| `Esc` | clear search, close dialogs |
+| `Esc` | close the detail panel, clear search, close dialogs |
 | double-click a row | start / stop |
 
 ## Privacy
@@ -192,7 +197,7 @@ Server Hub runs only on your Mac.
 
 - It reads the list of listening ports and processes (`lsof`, `ps`) and the project files in the folders **you** add.
 - Health checks go **only to localhost**.
-- Sharing (⇄) is off until you press it, and only reaches devices on your local network.
+- Sharing on the LAN is off until you press it, and only reaches devices on your local network.
 - It saves its settings (your folder list and servers you added by hand) in
   `~/Library/Application Support/server-hub/`.
 - No account, no analytics, no tracking, no network calls to anyone else.
