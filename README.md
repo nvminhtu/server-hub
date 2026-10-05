@@ -266,10 +266,9 @@ npx tauri build --bundles app,dmg   # → src-tauri/target/release/bundle/
 
 Try the UI in a browser without building the app: `npm run bridge` (API on :4410) and `npm run dev` (http://localhost:1450).
 
-Signed + notarized release from your own Mac (Developer ID certificate in the keychain): `./scripts/release-signed.sh`.
-
-Releases are built by GitHub Actions (`.github/workflows/release.yml`): bump `version` in `package.json` and
-`src-tauri/tauri.conf.json`, add a section to `CHANGELOG.md`, push to `main`.
+Releases are built on a Mac, not in CI: bump `version` in `package.json` and `src-tauri/tauri.conf.json`, add a section
+to `CHANGELOG.md`, push to `main`, then run `./scripts/release-signed.sh` (Developer ID certificate in the keychain) to
+build, sign, notarize and publish the release. The GitHub Actions workflow only runs when started by hand.
 
 ## Feedback
 

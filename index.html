@@ -6,25 +6,23 @@
   <title>Server Hub</title>
 </head>
 <body>
-<div class="app noside" id="app">
+<div class="app noside nodetail" id="app">
   <header class="top" data-tauri-drag-region>
     <button id="sideBtn" class="icon" title="Show / hide sidebar (⌘B)">☰</button>
-    <b class="brand" data-tauri-drag-region><span class="logo" data-tauri-drag-region>▶</span>Server Hub</b>
+    <b class="brand" data-tauri-drag-region>Server Hub</b>
     <div class="tabs"><button id="tLocal" data-view="__localhost__">Localhost</button><button id="tProj" data-view="all">Projects</button></div>
-    <div class="search"><span class="k">⌘K</span><input id="q" placeholder="Search ports, projects, commands" spellcheck="false"></div>
-    <span class="pill" id="pill">0 on localhost</span>
-    <span class="pill bad" id="bad" style="display:none"></span>
-    <label class="chk" id="allWrap" title="Also list projects that are not running (main list + sidebar)"><input type="checkbox" id="showAll"> Show all</label>
     <span class="grow" data-tauri-drag-region></span>
-    <button id="stopAll" class="danger" title="Stop every running server (asks first)">■ Stop all</button>
-    <button id="rescan" title="Scan again">↻ Refresh</button>
-    <button id="addBtn" title="Add something that has no launch.json / package.json">+ Add</button>
+    <label class="chk" id="allWrap" title="Also list projects that are not running"><input type="checkbox" id="showAll"> Show all</label>
+    <div class="search"><input id="q" type="search" placeholder="Search  ⌘K" spellcheck="false"></div>
+    <button id="rescan" class="icon" title="Scan again">↻</button>
+    <button id="addBtn" class="icon" title="Add a server by hand">＋</button>
+    <button id="stopAll" title="Stop every running server (asks first)">Stop all</button>
   </header>
   <aside class="side" id="side"></aside>
   <main class="main"><div id="list"></div></main>
   <section class="log" id="logPane">
-    <div class="lh"><span id="logTitle">Select a row to see its log</span><span class="grow"></span><span class="faint" id="logHint"></span></div>
-    <pre id="log"></pre>
+    <div class="lh"><span id="logTitle"></span><span class="grow"></span><span class="dacts" id="dActs"></span><button class="icon x" data-close title="Close (Esc)">✕</button></div>
+    <div class="dbody"><div class="kv" id="dInfo"></div><pre id="log"></pre></div>
   </section>
 </div>
 

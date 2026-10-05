@@ -118,53 +118,41 @@ function folders() {
     .join('')}<button class="addroot" data-root="add" title="Scan another folder for projects">+ Add folder</button></div>`;
 }
 
+// A row keeps only ▶/■ and ↗; share, Finder and copy live in the detail pane.
 function actions(r: Row) {
-  const on = r.status === 'running' || r.status === 'starting';
+  const on = isOn(r);
   const b = busy.has(r.id);
   let h = '';
+  if (r.url && (on || !r.canStart)) h += `<button class="act" data-open="${esc(r.url)}" title="Open ${esc(r.url)}">↗</button>`;
   if (on) {
     const isArmed = armed === r.id;
     h += `<button class="act stop ${isArmed ? 'armed' : ''}" data-stop="${r.id}" title="${r.own ? 'Stop' : `Stop (started by ${esc(r.source)})`}">${isArmed ? 'Stop?' : '■'}</button>`;
   } else if (r.canStart) {
     h += `<button class="act play" data-start="${r.id}" ${b ? 'disabled' : ''} title="Start">${b ? '…' : '▶'}</button>`;
-  } else {
-    h += `<span class="act ghost" title="Attach-only: Claude preview opens this URL, nothing to start">—</span>`;
   }
-  if (r.url && (on || !r.canStart)) h += `<button class="act" data-open="${esc(r.url)}" title="${esc(r.url)}">↗</button>`;
-  else h += `<span class="act ghost"></span>`;
-  const lp = on ? (r.ports[0] ?? null) : null;
-  h += lp ? shareBtn(lp) : `<span class="act ghost"></span>`;
-  h += `<button class="act" data-folder="${esc(r.cwdFull)}" title="Open folder in Finder">⌂</button>`;
-  h += `<button class="act" data-copy="${esc(`cd ${r.cwd} && ${r.command}`)}" title="Copy command">⧉</button>`;
   return h;
 }
 
 // ⇄ = share on the local network. Green when other devices can open it, with the link in the tooltip.
 function shareBtn(port: number) {
   const p = snap.ports.find((x) => x.port === port);
-  if (!p) return `<span class="act ghost"></span>`;
-  const key = `share:${port}`;
+  if (!p || p.health === 'tcp') return '';
   if (p.lan === 'shared') {
-    const isArmed = armed === key;
-    return `<button class="act lan on ${isArmed ? 'armed' : ''}" data-unshare="${port}" title="Shared on the LAN: ${esc(p.lanUrl)}\nClick to copy, click Stop? to stop sharing">${isArmed ? 'Stop?' : '⇄'}</button>`;
+    const isArmed = armed === `share:${port}`;
+    return `<button class="on ${isArmed ? 'armed' : ''}" data-unshare="${port}" title="Shared on the LAN: ${esc(p.lanUrl)}\nClick to copy, click again to stop sharing">${isArmed ? 'Stop sharing?' : 'Shared on LAN'}</button>`;
   }
-  if (p.lan === 'open') return `<button class="act lan on" data-share="${port}" title="Already reachable on the LAN: ${esc(p.lanUrl)} (click to copy)">⇄</button>`;
-  return `<button class="act lan" data-share="${port}" title="${snap.lanIp ? 'Share on the local network: other devices on the same Wi-Fi can open it' : 'Not on a local network'}" ${snap.lanIp ? '' : 'disabled'}>⇄</button>`;
+  if (p.lan === 'open') return `<button class="on" data-share="${port}" title="Already reachable on the LAN: ${esc(p.lanUrl)} (click to copy)">On LAN</button>`;
+  return `<button data-share="${port}" title="${snap.lanIp ? 'Other devices on the same Wi-Fi can open it' : 'Not on a local network'}" ${snap.lanIp ? '' : 'disabled'}>Share on LAN</button>`;
 }
-
-const lanTag = (port?: number) => { const p = snap.ports.find((x) => x.port === port); return p?.lanUrl ? `LAN ${p.lanUrl.replace('http://', '')}` : ''; };
 
 function rowHtml(r: Row) {
   const port = r.ports.length ? r.ports.map((p) => `:${p}`).join(' ') : r.port ? `:${r.port}` : r.kind === 'run.sh' ? 'game' : '';
-  const meta = r.status === 'running' || r.status === 'starting' ? [lanTag(r.ports[0]), ago(r.secs), r.mb != null ? `${r.mb} MB` : '', r.own ? '' : r.source ? `by ${r.source}` : ''].filter(Boolean).join(' · ') : '';
-  const warn = r.note ? `<span class="chip ${r.status === 'error' ? 'red' : 'red'}" title="${esc(r.note)}">${esc(r.note)}</span>` : r.sharedPort.length && r.status !== 'running' ? `<span class="chip amber" title="Same port as ${esc(r.sharedPort.join(', '))}">shares :${r.port}</span>` : '';
+  const warn = r.note ? `<span class="chip red" title="${esc(r.note)}">${esc(r.note)}</span>` : r.sharedPort.length && r.status !== 'running' ? `<span class="chip amber" title="Same port as ${esc(r.sharedPort.join(', '))}">shares :${r.port}</span>` : '';
   const sick = r.status === 'running' && r.health === 'unhealthy';
   return `<div class="row ${selected === r.id ? 'sel' : ''} st-${r.status}" data-row="${r.id}">
     <span class="dot ${sick ? 'unhealthy' : r.status}" title="${sick ? 'running, but unhealthy (5xx or no answer)' : r.status}"></span>
-    <span class="nm mono">${esc(r.name)}</span>
-    <span class="cmd mono" title="${esc(r.cwd)}\n${esc(r.command)}">${esc(r.command)}</span>
-    <span class="port mono">${esc(port)}</span>
-    <span class="meta">${warn || esc(meta)}</span>
+    <span class="nm">${esc(r.name)}</span>
+    <span class="port">${warn || esc(port)}</span>
     <span class="acts">${actions(r)}</span>
   </div>`;
 }
@@ -208,17 +196,12 @@ function renderPorts() {
     const key = `port:${p.port}`;
     const isArmed = armed === key;
     h += `<div class="row prow ${selected === key ? 'sel' : ''} h-${p.health}" data-row="${key}">
-      <span class="dot ${p.health}" title="${HEALTH[p.health]}"></span>
-      <span class="port big mono">:${p.port}</span>
-      <span class="nm mono" title="pid ${p.pid} · ${esc(p.cwd)}">${esc(p.name)} <span class="tool">${esc(p.tool)}</span></span>
-      <span class="hl ${p.health}">${esc(healthText(p))}</span>
-      <span class="meta">${esc([p.lanUrl ? `LAN ${p.lanUrl.replace('http://', '')}` : '', ago(p.secs), `${p.mb} MB`, p.source ? `by ${p.source}` : ''].filter(Boolean).join(' · '))}</span>
+      <span class="dot ${p.health}" title="${esc(healthText(p))}"></span>
+      <span class="port big">:${p.port}</span>
+      <span class="nm">${esc(p.name)}<span class="tool">${esc(p.tool)}</span></span>
       <span class="acts">
         <button class="act" data-open="http://localhost:${p.port}" title="Open http://localhost:${p.port}">↗</button>
-        ${p.health === 'tcp' ? '<span class="act ghost"></span>' : shareBtn(p.port)}
         <button class="act stop ${isArmed ? 'armed' : ''}" data-kill="${p.port}" title="Stop pid ${p.pid}">${isArmed ? 'Stop?' : '■'}</button>
-        ${p.cwd && p.cwd !== '/' ? `<button class="act" data-folder="${esc(p.cwd)}" title="Open folder in Finder">⌂</button>` : '<span class="act ghost"></span>'}
-        <button class="act" data-copy="http://localhost:${p.port}" title="Copy URL">⧉</button>
       </span>
     </div>`;
   }
@@ -226,62 +209,88 @@ function renderPorts() {
 }
 
 function render() {
-  $('pill').textContent = `${snap.ports.length} on localhost`;
-  $('pill').classList.toggle('on', snap.ports.length > 0);
-  $('bad').textContent = snap.unhealthy ? `${snap.unhealthy} unhealthy` : '';
-  $('bad').style.display = snap.unhealthy ? '' : 'none';
+  $('allWrap').style.display = view === LOCAL ? 'none' : '';
   $<HTMLInputElement>('showAll').checked = showAll;
   $('tLocal').classList.toggle('sel', view === LOCAL);
   $('tProj').classList.toggle('sel', view !== LOCAL);
   $('rescan').title = view === LOCAL ? 'Check every port again' : 'Scan the projects folder again';
   const n = stopTargets().length;
   $<HTMLButtonElement>('stopAll').disabled = n === 0;
-  $('stopAll').textContent = n ? `■ Stop all (${n})` : '■ Stop all';
+  $('stopAll').textContent = n ? `Stop all (${n})` : 'Stop all';
   renderSide();
   renderList();
-  renderLogHead();
+  renderDetail();
 }
 
-// ---- log pane -------------------------------------------------------------------------------------------------
+// ---- detail pane -------------------------------------------------------------------------------------------------
 let logTimer = 0;
-function renderLogHead() {
+// Click a row → this pane shows everything about it (the row itself stays short); Esc or ✕ closes it.
+function renderDetail() {
   const r = snap.entries.find((e) => e.id === selected);
   const o = snap.ports.find((x) => `port:${x.port}` === selected);
+  $('app').classList.toggle('nodetail', !r && !o);
+  if (!r && !o) return;
+  const kv = (pairs: [string, unknown][]) => pairs.filter(([, v]) => v !== '' && v != null).map(([k, v]) => `<span>${k}</span><span>${esc(v)}</span>`).join('');
+  const btn = (attr: string, val: string, label: string, title = '') => `<button ${attr}="${esc(val)}" title="${esc(title)}">${label}</button>`;
+  let acts = '';
   if (r) {
-    $('logTitle').innerHTML = `<span class="dot ${r.status}"></span><b class="mono">${esc(r.name)}</b> <span class="faint mono" title="from ${esc(r.file)}">${esc(r.cwd)}</span>`;
+    const on = isOn(r);
+    const lp = on ? (r.ports[0] ?? null) : null;
+    const lan = lp ? snap.ports.find((x) => x.port === lp)?.lanUrl : null;
+    $('logTitle').innerHTML = `<span class="dot ${r.status}"></span><b>${esc(r.name)}</b><span class="faint">${esc(r.status)}</span>`;
+    $('dInfo').innerHTML = kv([
+      ['Port', r.ports.length ? r.ports.map((p) => `:${p}`).join(' ') : r.port ? `:${r.port}` : ''],
+      ['URL', r.url], ['LAN', lan], ['Command', r.command], ['Folder', r.cwd], ['From', r.file],
+      ['Up', on ? ago(r.secs) : ''], ['Memory', on && r.mb != null ? `${r.mb} MB` : ''], ['PID', on ? r.pid : ''],
+      ['Started by', on ? (r.own ? 'Server Hub' : r.source) : ''], ['Note', r.note],
+    ]);
+    if (r.url && (on || !r.canStart)) acts += btn('data-open', r.url, 'Open', r.url);
+    if (lp) acts += shareBtn(lp);
+    acts += btn('data-folder', r.cwdFull, 'Show in Finder');
+    acts += btn('data-copy', `cd ${r.cwd} && ${r.command}`, 'Copy command');
+    if (on) acts += `<button class="${armed === r.id ? 'armed' : ''}" data-stop="${r.id}">${armed === r.id ? 'Stop?' : 'Stop'}</button>`;
+    else if (r.canStart) acts += btn('data-start', r.id, 'Start');
   } else if (o) {
-    $('logTitle').innerHTML = `<span class="dot ${o.health}"></span><b class="mono">:${o.port} ${esc(o.name)}</b> <span class="faint mono">pid ${o.pid} · ${esc(o.cwd)}</span>`;
-  } else {
-    $('logTitle').textContent = 'Select a row to see its log';
+    $('logTitle').innerHTML = `<span class="dot ${o.health}"></span><b>:${o.port} ${esc(o.name)}</b><span class="faint">${esc(o.tool)}</span>`;
+    $('dInfo').innerHTML = kv([
+      ['URL', `http://localhost:${o.port}`], ['Health', `${HEALTH[o.health]} (${healthText(o)})`], ['LAN', o.lanUrl],
+      ['Command', o.args], ['Folder', o.cwd], ['Up', ago(o.secs)], ['Memory', `${o.mb} MB`], ['PID', o.pid], ['Started by', o.source],
+    ]);
+    acts += btn('data-open', `http://localhost:${o.port}`, 'Open');
+    acts += shareBtn(o.port);
+    if (o.cwd && o.cwd !== '/') acts += btn('data-folder', o.cwd, 'Show in Finder');
+    acts += btn('data-copy', `http://localhost:${o.port}`, 'Copy URL');
+    const k = `port:${o.port}`;
+    acts += `<button class="${armed === k ? 'armed' : ''}" data-kill="${o.port}">${armed === k ? 'Stop?' : 'Stop'}</button>`;
   }
+  $('dActs').innerHTML = acts;
 }
 
+// No log to show → the info column takes the whole pane.
+const noLog = (on: boolean) => $('logPane').classList.toggle('nolog', on);
 async function loadLog() {
   const pre = $('log');
   const o = snap.ports.find((x) => `port:${x.port}` === selected);
   const r = snap.entries.find((e) => e.id === (o?.rowId ?? selected));
   if (!r && !o) {
     pre.textContent = '';
-    $('logHint').textContent = '↑↓ select · Space start/stop · ↵ open · ⌘K search';
     return;
   }
   if (o && !r?.own) {
-    pre.textContent = `$ ${o.args}\n  in ${o.cwd || '?'}\n\nhttp://localhost:${o.port} → ${HEALTH[o.health]} (${healthText(o)})\nStarted by ${o.source || '?'} · pid ${o.pid} · ${o.mb} MB · up ${ago(o.secs)}\n\nIts log lives in the window that started it — Server Hub only keeps logs of servers it started itself (Projects → ▶).`;
-    $('logHint').textContent = '↑↓ select · ↵ open · Space stop · ⌘K search';
+    noLog(true);
+    pre.textContent = `No log here: it lives in the window that started this server (${o.source || 'another app'}).\n\nServer Hub keeps logs only for servers it starts itself (Projects → ▶).`;
     return;
   }
   const l = await call<{ lines: string[]; own: boolean }>('logs', { id: r!.id }).catch(() => ({ lines: [], own: false }));
+  noLog(!l.lines.length);
   if (l.lines.length) {
     const atBottom = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 30;
     pre.innerHTML = l.lines.map((s) => `<span class="${/error|fail|exception|EADDRINUSE/i.test(s) ? 'lr' : /ready|local:|listening|started|compiled/i.test(s) ? 'lg' : ''}">${esc(s)}</span>`).join('\n');
     if (atBottom) pre.scrollTop = pre.scrollHeight;
-    $('logHint').textContent = `${l.lines.length} lines`;
   } else if (r!.status === 'running') {
-    pre.textContent = `$ ${r!.command}\n\nRunning, started by ${r!.source || 'another app'} (pid ${r!.pid}). Its log lives there — stop it and press ▶ here to see the log in Server Hub.`;
-    $('logHint').textContent = '';
+    pre.textContent = `Started by ${r!.source || 'another app'}, so its log lives there.\n\nStop it and press ▶ here to see the log in Server Hub.`;
   } else {
-    pre.textContent = `$ ${r!.command}\n  in ${r!.cwd}\n\nPress ▶ (or Space) to start.`;
-    $('logHint').textContent = '';
+    pre.textContent = `Press ▶ (or Space) to start.`;
   }
 }
 
@@ -289,7 +298,7 @@ function select(key: string | null) {
   selected = key;
   armed = null;
   renderList();
-  renderLogHead();
+  renderDetail();
   loadLog();
   document.querySelector('.row.sel')?.scrollIntoView({ block: 'nearest' });
 }
@@ -312,8 +321,8 @@ async function start(id: string) {
 async function stop(id: string) {
   if (armed !== id) {
     armed = id;
-    renderList();
-    setTimeout(() => { if (armed === id) { armed = null; renderList(); } }, 3000);
+    render();
+    setTimeout(() => { if (armed === id) { armed = null; render(); } }, 3000);
     return;
   }
   armed = null;
@@ -364,6 +373,7 @@ document.addEventListener('click', (ev) => {
     removeRoot(un.dataset.unroot!);
     return;
   }
+  if (t.closest('[data-close]')) { select(null); return; }
   const b = t.closest<HTMLElement>('[data-start],[data-stop],[data-kill],[data-open],[data-folder],[data-copy],[data-view],[data-share],[data-unshare]');
   if (b) {
     ev.stopPropagation();
@@ -404,6 +414,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape') {
     if ($('addOv').classList.contains('show')) return closeAdd();
     if ($('saOv').classList.contains('show')) return closeStopAll();
+    if (!(ev.target as HTMLElement).matches('input') && selected) return select(null);
     $<HTMLInputElement>('q').value = '';
     $<HTMLInputElement>('q').blur();
     renderList();
@@ -463,8 +474,8 @@ async function unshare(port: number) {
   if (armed !== key) {
     armed = key;
     if (p?.lanUrl) copyLink(p.lanUrl, `:${port} on the LAN`);
-    renderList();
-    setTimeout(() => { if (armed === key) { armed = null; renderList(); } }, 3000);
+    render();
+    setTimeout(() => { if (armed === key) { armed = null; render(); } }, 3000);
     return;
   }
   armed = null;

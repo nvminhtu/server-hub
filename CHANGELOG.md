@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+
+- **Plain macOS look.** White window, light gray toolbar and sidebar, system font and colors — no more dark terminal theme.
+- **Smaller window.** Opens at 900×560 and shrinks down to 640×400; the toolbar is shorter and never cuts off buttons.
+- **Short rows, details on click.** A row shows just status, port, name, open and start/stop. Click it and a panel opens
+  below with the URL, health, LAN link, command, folder, uptime, memory, PID and who started it, plus Open, Share on LAN,
+  Show in Finder, Copy and Stop, and the log. Esc or ✕ closes it.
+
 ## 0.2.1
 
 - **Sidebar starts closed.** More room for the list; open it with ☰ or ⌘B. New **Localhost / Projects** tabs in the top bar.

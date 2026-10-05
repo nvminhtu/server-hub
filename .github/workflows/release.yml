@@ -1,16 +1,14 @@
-# Bump `version` in package.json on main (or push a tag `vX.Y.Z`, or run it by hand) → build the universal macOS .dmg
-# and publish it as release vX.Y.Z. A version that already has a release is skipped.
+# Run by hand only (Actions → release → Run workflow) → build the universal macOS .dmg and publish it as release vX.Y.Z.
+# A version that already has a release is skipped.
 # Signing + notarization turn on by themselves when these repository secrets exist (Settings → Secrets → Actions):
 #   APPLE_CERTIFICATE (base64 of the Developer ID Application .p12), APPLE_CERTIFICATE_PASSWORD,
 #   APPLE_SIGNING_IDENTITY ("Developer ID Application: Name (TEAMID)"), APPLE_ID, APPLE_PASSWORD (app-specific), APPLE_TEAM_ID
 # Without them the build is unsigned (users open it via Privacy & Security → Open Anyway).
 name: release
 
+# Releases are built, signed and notarized on the maintainer's Mac (scripts/release-signed.sh) to save Actions minutes,
+# so this workflow only runs when started by hand (Actions → release → Run workflow).
 on:
-  push:
-    branches: [main]
-    paths: [package.json, .github/workflows/release.yml]
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
